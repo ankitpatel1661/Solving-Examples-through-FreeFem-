@@ -34,7 +34,7 @@ You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples throu
 freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
 Part 1 has region number 0
 Part 2 has redion number 3
-times: compile 0.101s, execution 0.231s,  mpirank:0
+times: compile 0.092s, execution 0.189s,  mpirank:0
  ######## We forget of deleting   -2 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
  CodeAlloc : nb ptr  3747,  size :480664 mpirank: 0
 Ok: Normal End

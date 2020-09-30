@@ -1,0 +1,21 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\mesh_with_and_without_hole.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : //Mesh without and with hole
+    2 : border a(t=0, 2*pi){x=cos(t); y=sin(t); label=1;}
+    3 : border b(t=0, 2*pi){x=0.3+0.3*cos(t); y=0.3*sin(t); label=2;}
+    4 : plot(a(50) + b(30)); //to see a plot of the border mesh
+    5 : mesh Thwithouthole = buildmesh(a(50) + b(30));
+    6 : mesh Thwithhole = buildmesh(a(50) + b(-30));
+    7 : plot(Thwithouthole, ps="Thwithouthole.eps");
+    8 : plot(Thwithhole, ps="Thwithhole.eps");
+    9 :  sizestack + 1024 =1472  ( 448 )
+ 
+  --  mesh:  Nb of Triangles =    834, Nb of Vertices 443
+  --  mesh:  Nb of Triangles =    676, Nb of Vertices 378
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+times: compile 0.056s, execution 0.122s,  mpirank:0
+ ######## We forget of deleting   -2 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3493,  size :470992 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\mesh_with_and_without_hole.cpp
