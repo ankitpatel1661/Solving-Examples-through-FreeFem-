@@ -1,0 +1,130 @@
+You chose the file "C:\Users\Ankit Patel\Desktop\Poissonequn\poisonequn.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : //Cool air (green) comes from the lower left and mix with hot air (magenta), the right boundary is free. This is Navier-Stokes-Boussinesq integrated with P1-bubble P1 mixte finite element.
+    2 : //A very small example 2d of how to solve the Poisson equation on a L shape
+    3 :
+    4 : border aaa(t=0,1){x=t;y=0;};
+    5 : border bbb(t=0,0.5){x=1;y=t;};
+    6 : border ccc(t=0,0.5){x=1-t;y=0.5;};
+    7 : border ddd(t=0.5,1){x=0.5;y=t;};
+    8 : border eee(t=0.5,1){x=1-t;y=1;};
+    9 : border fff(t=0,1){x=0;y=1-t;};
+   10 : mesh Th = buildmesh (aaa(6) + bbb(4) + ccc(4) +ddd(4) + eee(4) + fff(6));
+   11 : fespace Vh(Th,P1);   //  to change P1 in P2 to make P2 finite element.
+   12 : Vh u=0,v;
+   13 : func f= 1;
+   14 : func g= 0;
+   15 : int i=0;
+   16 : real error=0.1, coef= 0.1^(1./5.);
+   17 : problem Probem1(u,v,solver=CG,eps=-1.0e-6) =
+   18 :     int2d(Th)(  dx(u)*dx(v) + dy(u)*dy(v))
+   19 :   + int2d(Th) ( v*f )
+   20 :   + on(aaa,bbb,ccc,ddd,eee,fff,u=g)  ;
+   21 :
+   22 : for (i=0;i< 10;i++)
+   23 : {
+   24 :   real d = clock();
+   25 :   Probem1; //  solve the problem
+   26 :   plot(u,Th,wait=1);
+   27 :   Th=adaptmesh(Th,u,inquire=1,err=error);
+   28 :   error = error * coef;
+   29 : } ;
+   30 :  sizestack + 1024 =1784  ( 760 )
+ 
+  --  mesh:  Nb of Triangles =     86, Nb of Vertices 58
+ GC:  converge in  13 g=1.84249e-13 rho= 0.988773 gamma= 0.0848822
+  -- Solve :
+          min -0.0345792  max -1.41303e-62
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 234 , h  min 0.0466583 , h max 0.165561
+     area =  0.75 , M area = 99.9259 , M area/( |Khat| nt) 0.986192
+     infiny-regularity:  min 0.470453  max 1.77564
+     anisomax  4.16819, beta max = 1.39084 min  0.809964
+  --  mesh:  Nb of Triangles =    234, Nb of Vertices 141
+ GC:  converge in  24 g=8.10375e-13 rho= 1.15486 gamma= 0.146186
+  -- Solve :
+          min -0.0366302  max -1.0503e-33
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 309 , h  min 0.0283344 , h max 0.223456
+     area =  0.75 , M area = 147.769 , M area/( |Khat| nt) 1.10439
+     infiny-regularity:  min 0.302671  max 2.09515
+     anisomax  9.36024, beta max = 1.50685 min  0.73444
+  --  mesh:  Nb of Triangles =    309, Nb of Vertices 183
+ GC:  converge in  26 g=6.44739e-13 rho= 1.37071 gamma= 0.456033
+  -- Solve :
+          min -0.0370508  max 1.68432e-34
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 440 , h  min 0.0155703 , h max 0.214194
+     area =  0.75 , M area = 216.283 , M area/( |Khat| nt) 1.13519
+     infiny-regularity:  min 0.42464  max 2.43552
+     anisomax  6.33734, beta max = 1.27157 min  0.688657
+  --  mesh:  Nb of Triangles =    440, Nb of Vertices 252
+ GC:  converge in  37 g=4.76882e-13 rho= 1.42901 gamma= 0.41467
+  -- Solve :
+          min -0.0368667  max 1.08862e-33
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 684 , h  min 0.00762545 , h max 0.248915
+     area =  0.75 , M area = 332.145 , M area/( |Khat| nt) 1.12143
+     infiny-regularity:  min 0.400814  max 2.21271
+     anisomax  10.4647, beta max = 1.26837 min  0.653639
+  --  mesh:  Nb of Triangles =    684, Nb of Vertices 379
+ GC:  converge in  48 g=4.71925e-13 rho= 1.37295 gamma= 0.450061
+  -- Solve :
+          min -0.0370876  max 2.1102e-33
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 1137 , h  min 0.00427549 , h max 0.181795
+     area =  0.75 , M area = 528.865 , M area/( |Khat| nt) 1.0742
+     infiny-regularity:  min 0.404789  max 2.1798
+     anisomax  10.2734, beta max = 1.34855 min  0.705639
+  --  mesh:  Nb of Triangles =   1137, Nb of Vertices 616
+ GC:  converge in  59 g=8.81178e-13 rho= 1.64321 gamma= 0.770586
+  -- Solve :
+          min -0.0371924  max 7.96654e-34
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 1770 , h  min 0.00208453 , h max 0.156795
+     area =  0.75 , M area = 849.447 , M area/( |Khat| nt) 1.10831
+     infiny-regularity:  min 0.406373  max 2.27366
+     anisomax  13.1509, beta max = 1.26201 min  0.651849
+  --  mesh:  Nb of Triangles =   1770, Nb of Vertices 946
+ GC:  converge in  74 g=9.30075e-13 rho= 1.80583 gamma= 0.795649
+  -- Solve :
+          min -0.0372944  max 1.01555e-34
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 2838 , h  min 0.00120957 , h max 0.130689
+     area =  0.75 , M area = 1343.24 , M area/( |Khat| nt) 1.09305
+     infiny-regularity:  min 0.337183  max 2.14156
+     anisomax  12.6533, beta max = 1.40698 min  0.692531
+  --  mesh:  Nb of Triangles =   2838, Nb of Vertices 1497
+ GC:  converge in  98 g=8.15804e-13 rho= 1.70413 gamma= 0.752984
+  -- Solve :
+          min -0.0373143  max 1.01268e-34
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 4488 , h  min 0.000540588 , h max 0.116833
+     area =  0.75 , M area = 2134.49 , M area/( |Khat| nt) 1.09835
+     infiny-regularity:  min 0.359695  max 2.05598
+     anisomax  14.8249, beta max = 1.37426 min  0.671817
+  --  mesh:  Nb of Triangles =   4488, Nb of Vertices 2345
+ GC:  converge in  117 g=8.62391e-13 rho= 1.69623 gamma= 0.770412
+  -- Solve :
+          min -0.0373206  max 5.13819e-35
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 7179 , h  min 0.000283345 , h max 0.100332
+     area =  0.75 , M area = 3387.74 , M area/( |Khat| nt) 1.0898
+     infiny-regularity:  min 0.377901  max 2.30164
+     anisomax  12.8804, beta max = 1.35035 min  0.688969
+  --  mesh:  Nb of Triangles =   7179, Nb of Vertices 3717
+ GC:  converge in  148 g=8.77165e-13 rho= 1.50752 gamma= 0.800658
+  -- Solve :
+          min -0.0373252  max 2.61125e-35
+  number of required edges : 0
+  -- adaptmesh Regulary:  Nb triangles 11198 , h  min 0.000154084 , h max 0.106337
+     area =  0.75 , M area = 5365.35 , M area/( |Khat| nt) 1.10651
+     infiny-regularity:  min 0.416711  max 2.10542
+     anisomax  16.7588, beta max = 1.45357 min  0.684888
+  --  mesh:  Nb of Triangles =  11198, Nb of Vertices 5763
+times: compile 0.152s, execution 30.992s,  mpirank:0
+ CodeAlloc : nb ptr  3660,  size :479968 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Desktop\Poissonequn\poisonequn.cpp

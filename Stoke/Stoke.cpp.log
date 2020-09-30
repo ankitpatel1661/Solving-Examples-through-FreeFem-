@@ -1,0 +1,339 @@
+You chose the file "C:\Users\Ankit Patel\Desktop\Stoke\Stoke.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : /*********************************************************************
+    2 :  *
+    3 :  * garanteed A posteroiri error estimate for Stokes problems using Uzawa algorithm
+    4 :  * usage: FreeFem++
+    5 :  * source article: https://who.rocq.inria.fr/Martin.Vohralik/Enseig/APost/a_posteriori.pdf
+    6 :  * page 111 for the Stokes problem
+    7 :  *********************************************************************/
+    8 :
+    9 : load "Element_Mixte"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\Element_Mixte = 0) //For loading the RT1 element
+   10 : system("clear");
+   11 :
+   12 :
+   13 : // define the mesh
+   14 : int numnode = 30;
+   15 :
+   16 :
+   17 : macro Div(u1,u2) (dx(u1)+dy(u2))  )  //EOM
+   18 : macro Grad(u) [dx(u),dy(u)]       )  //EOM
+   19 :
+   20 :
+   21 : // mesh to define
+   22 : mesh Th=square(numnode,numnode);
+   23 : plot(Th,cmm="mesh",ps="mesh.eps");
+   24 : real AreaDomain=Th.area;
+   25 :
+   26 : // parameter in the Uzawa method, we define the value as 1 here
+   27 : real alpha = 1;
+   28 :
+   29 : fespace Uh(Th,[P2,P2]);  // fonction space for  u=(u1,u2)
+   30 : Uh [u1,u2],[v1,v2],[usave1,usave2];
+   31 : fespace Ph(Th,P1);       // function space for p
+   32 : fespace Ph0(Th,P0);
+   33 : Ph p, q;
+   34 : Uh [uh1,uh2],[uvisu1,uvisu2];
+   35 : Ph ph,pvisu;
+   36 :
+   37 : // Setting for the analytic solution
+   38 : real beta = 0.44;    // to be change with each different case
+   39 : func ue1=2*x^2*y*(x - 1)^2*(y - 1)^2 + x^2*y^2*(2*y - 2)*(x - 1)^2;
+   40 : func ue2=- 2*x*y^2*(x - 1)^2*(y - 1)^2 - x^2*y^2*(2*x - 2)*(y - 1)^2;
+   41 : func pe=x+y-1;
+   42 : func dxue1=2*x*y^2*(2*y - 2)*(x - 1)^2 + 2*x^2*y*(2*x - 2)*(y - 1)^2 + x^2*y^2*(2*x - 2)*(2*y - 2) + 4*x*y*(x -
+1)^2*(y - 1)^2;
+   43 : func dyue1=2*x^2*y^2*(x - 1)^2 + 2*x^2*(x - 1)^2*(y - 1)^2 + 4*x^2*y*(2*y - 2)*(x - 1)^2;
+   44 : func dxue2=- 2*x^2*y^2*(y - 1)^2 - 2*y^2*(x - 1)^2*(y - 1)^2 - 4*x*y^2*(2*x - 2)*(y - 1)^2;
+   45 : func dyue2=- 2*x*y^2*(2*y - 2)*(x - 1)^2 - 2*x^2*y*(2*x - 2)*(y - 1)^2 - x^2*y^2*(2*x - 2)*(2*y - 2) - 4*x*y*(x
+- 1)^2*(y - 1)^2;
+   46 : func f1=-24*x^4*y + 12*x^4 + 48*x^3*y - 24*x^3 - 48*x^2*y^3 + 72*x^2*y^2 - 48*x^2*y + 12*x^2 + 48*x*y^3 - 72*x*y^2 + 24*x*y - 8*y^3 + 12*y^2 - 4*y + 1;
+   47 : func f2=48*x^3*y^2 - 48*x^3*y + 8*x^3 - 72*x^2*y^2 + 72*x^2*y - 12*x^2 + 24*x*y^4 - 48*x*y^3 + 48*x*y^2 - 24*x*y + 4*x - 12*y^4 + 24*y^3 - 12*y^2 + 1;
+   48 :
+   49 :
+   50 : [uvisu1,uvisu2]=[ue1,ue2];
+   51 : pvisu=pe;
+   52 :
+   53 :
+   54 :
+   55 : // variational formulation to define:
+   56 : varf a([u1,u2],[v1,v2])=int2d(Th)(Grad(u1)        [dx(u1),dy(u1)]      '*Grad(v1)        [dx(v1),dy(v1)]      +Grad(u2)        [dx(u2),dy(u2)]      '*Grad(v2)        [dx(v2),dy(v2)]      )+int2d(Th)(f1*v1+f2*v2)
+   57 : +on(1,2,3,4,u1=ue1,u2=ue2);
+   58 : varf bc1([u1,u2],[v1,v2])=on(1,2,3,4,u1=1,u2=1);
+   59 : varf b([u1,u2],[q])= int2d(Th)(Div(u1,u2)   (dx(u1)+dy(u2)) *q);
+   60 : varf c([p],[q])=int2d(Th)(p*q);
+   61 : matrix A=a(Uh,Uh,tgv=-1,solver=GMRES);
+   62 : //set(A, solver=CG);
+   63 : matrix B=b(Uh,Ph);
+   64 : matrix Bt=B';
+   65 : matrix C=c(Ph,Ph,solver=CG); // set solver=CG, to avoird the alert message  from C^-1;
+   66 :
+   67 :
+   68 : real[int] F=a(0,Uh,tgv=-1); //Boundary conditions
+   69 : real[int] BC=bc1(0,Uh,tgv=-1); //Boundary conditions
+   70 : Uh [b1,b2];
+   71 :
+   72 :
+   73 : func real[int] DJ(real[int] &u)
+   74 : {
+   75 : real[int] Au=A*u;
+   76 : return Au; // return of global variable ok
+   77 : };
+   78 :
+   79 :
+   80 : p=0;
+   81 : real epsgc= 1e-10;
+   82 : // Uzawa iteration
+   83 : int inumOuter=0;
+   84 : while(inumOuter<10000){  //to be changed after
+   85 :
+   86 :         b1[]=Bt*p[];    b1[]+=F;   // second member for problem  Au=Btu+F
+   87 :         b1[]= BC ? F : b1[];
+   88 :         u1[]= BC? F: u1[];
+   89 :
+   90 :         LinearCG(DJ,u1[],b1[],veps=epsgc,nbiter=2000,verbosity=0);
+   91 :         epsgc=-abs(epsgc);
+   92 :
+   93 :         real[int] Bu1=B*u1[];
+   94 :         Bu1*=alpha;
+   95 :         real normBu1=sqrt(Bu1'*Bu1);
+   96 :         if (normBu1<1e-10) break;
+   97 :
+   98 :         // update for p
+   99 :         real[int] ptemp(p[].n);
+  100 :         ptemp=C^-1*Bu1;  // C p^{k+1}=C p^{k} - alpha Bu
+  101 :         p[]-=ptemp;
+  102 :         p[]-=int2d(Th)(p)/AreaDomain;
+  103 :         inumOuter++;
+  104 : }
+  105 : ph=p;
+  106 : [uh1,uh2]=[u1,u2];     // save the solution of exact uzawa method
+  107 :
+  108 : real errorgradu=sqrt(int2d(Th)( (Grad(u1)        [dx(u1),dy(u1)]      -[dxue1,dyue1])'*(Grad(u1)        [dx(u1),dy(u1)]      -[dxue1,dyue1])+(Grad(u2)        [dx(u2),dy(u2)]      -[dxue2,dyue2])'*(Grad(u2)        [dx(u2),dy(u2)]
+  -[dxue2,dyue2])  ));
+  109 : real errorp=beta*sqrt(int2d(Th)( (p-pe)'*(p-pe) ));
+  110 : real errortotal=errorgradu+errorp;
+  111 :
+  112 :
+  113 : // Exact error computation
+  114 : fespace Whh(Th,P1);
+  115 : varf indicatorErrorDiscu(unused,chiK) = int2d(Th)(chiK*((Grad(uh1)        [dx(uh1),dy(uh1)]      -[dxue1,dyue1])'*(Grad(uh1)        [dx(uh1),dy(uh1)]      -[dxue1,dyue1])+(Grad(uh2)        [dx(uh2),dy(uh2)]      -[dxue2,dyue2])'*(Grad(uh2)        [dx(uh2),dy(uh2)]      -[dxue2,dyue2]) ));
+  116 : varf indicatorErrorDiscp(unused,chiK) = int2d(Th)(chiK*(beta*beta* (ph-pe)'*(ph-pe)   ));
+  117 : Whh mapErrorDisc;
+  118 : Whh mapErrorDiscu, mapErrorDiscp;
+  119 : mapErrorDiscu[]=indicatorErrorDiscu(0,Whh);
+  120 : mapErrorDiscp[]=indicatorErrorDiscp(0,Whh);
+  121 : real GlobalErrorU=sqrt(mapErrorDiscu[].sum);
+  122 : real GlobalErrorP=sqrt(mapErrorDiscp[].sum);
+  123 : mapErrorDiscu=sqrt(mapErrorDiscu);
+  124 : mapErrorDiscp=sqrt(mapErrorDiscp);
+  125 : mapErrorDisc=mapErrorDiscu+mapErrorDiscp;
+  126 :
+  127 :
+  128 : plot([uvisu1,uvisu2],value=1,fill=1,ps="analyticsolutionu.eps",cmm="Analytic solution u");
+  129 : plot(pvisu,value=1,fill=1,ps="analyticsolutionp.eps",cmm="Analytic solution p");
+  130 :
+  131 :
+  132 : plot([u1,u2],value=1,fill=1,ps="numericalsolutionu.eps",cmm="Numerical solution uh");
+  133 : plot(p,value=1,fill=1,ps="numericalsolutionp.eps",cmm="Numerical solution ph");
+  134 :
+  135 :
+  136 : plot(mapErrorDiscu,ps="ErrorDiscU.eps",value=1, fill=1,cmm="ErrorDiscretizationU");
+  137 : plot(mapErrorDiscp,ps="ErrorDiscP.eps",value=1, fill=1,cmm="ErrorDiscretizationP");
+  138 : plot(mapErrorDisc,ps="ErrorDiscTotal.eps",value=1, fill=1,cmm="ErrorDiscretization");
+  139 :
+  140 :
+  141 :
+  142 : //  A posteriori estimator
+  143 : mesh ThaI=Th;
+  144 : fespace Pa(ThaI,P1dc);
+  145 : fespace Xh(Th,P1);
+  146 : Xh phia=0;
+  147 : mesh[int] Tha(Th.nv);
+  148 : // construction of the patch for each node on the mesh
+  149 : for(int i=0; i <Th.nv; ++i)
+  150 : {
+  151 :         phia[][i]=1; // phia
+  152 :         Tha[i] = trunc(Th,phia>0,label=10);
+  153 :         if (Th(i).label==0) Tha[i]=change(Tha[i],flabel=10);
+  154 :         phia[][i]=0; // phia
+  155 : }
+  156 :
+  157 : fespace VPa(ThaI,[RT1,RT1,P1dc,P1dc]);
+  158 : fespace Vh(Th,[RT1,RT1]);
+  159 : real[int] areaPatcha(Th.nv);
+  160 : matrix[int] Aa(Th.nv);
+  161 : real[int][int] Fa(Th.nv);
+  162 : Vh [d11,d12,d21,d22]=[0,0,0,0];
+  163 : Vh [d11p,d12p,d21p,d22p]=[0,0,0,0];
+  164 : real epsregua = numnode*numnode*1e-10;
+  165 :
+  166 : for( int i=0; i < Th.nv ;i++)
+  167 : {
+  168 :         phia[][i]=1; // phia
+  169 :         ThaI = Tha[i];
+  170 :         Pa Chia =1;
+  171 :         VPa [d11t,d12t,d21t,d22t,qa1,qa2],[vh11,vh12,vh21,vh22,phih1,phih2];
+  172 :         varf Varflocala([d11t,d12t,d21t,d22t,qa1,qa2],[vh11,vh12,vh21,vh22,phih1,phih2]) =
+  173 :         int2d(ThaI)( [d11t,d12t,d21t,d22t]'*[vh11,vh12,vh21,vh22]
+  174 :         + (qa1*Div(vh11,vh12)   (dx(vh11)+dy(vh12)) +qa2*Div(vh21,vh22)   (dx(vh21)+dy(vh22)) )
+  175 :         + (Div(d11t,d12t)   (dx(d11t)+dy(d12t)) *phih1+Div(d21t,d22t)   (dx(d21t)+dy(d22t)) *phih2)
+  176 :         - (epsregua*(qa1*phih1+qa2*phih2))) // regularization;
+  177 :         + on(10,d11t=0,d12t=0,d21t=0,d22t=0);
+  178 :         matrix Art=Varflocala(VPa,VPa);
+  179 :         Aa[i]= Art;
+  180 :         set(Aa[i],solver=sparsesolver);
+  181 :
+  182 :         phia[][i]=0;
+  183 : }
+  184 :
+  185 : int[int][int] I(Th.nv); // number for Vh to Vhi
+  186 : real[int][int] epsI(Th.nv);
+  187 : Vh [num,num1,num2,num3];
+  188 : num[]=1:num[].n;
+  189 : for(int i=0; i <Th.nv; ++i)
+  190 : {
+  191 :    ThaI = Tha[i];
+  192 :    VPa [ul1,ul2,ul3,ul4,pl1,pl2];
+  193 :    [ul1,ul2,ul3,ul4,pl1,pl2] = [num,num1,num2,num3,1e9,1e9];
+  194 :    I[i].resize(VPa.ndof);
+  195 :    epsI[i].resize(VPa.ndof);
+  196 :    for(int j=0;j<ul1[].n;++j) {
+  197 :           epsI[i][j]= ul1[][j] < 0 ? -1 : 1;
+  198 :           I[i][j]= abs(ul1[][j])-0.5 ;
+  199 :           if(I[i][j]>= 999999999)I[i][j]=-1;
+  200 :         }
+  201 : }
+  202 : Vh [d11res,d12res,d21res,d22res]=[0,0,0,0];
+  203 :
+  204 : for(int i=0; i < Th.nv ;++i)
+  205 : {
+  206 :         phia[][i]=1;
+  207 :         ThaI = Tha[i];
+  208 :         Pa Chia =1;
+  209 :         fespace ProRT1(ThaI,[RT1,RT1]);
+  210 :         ProRT1 [pd11,pd12,pd21,pd22];
+  211 :         [pd11,pd12,pd21,pd22]=([dx(u1),dy(u1),dx(u2),dy(u2)]-[p,0,0,p])*phia;
+  212 :
+  213 :         VPa [d11tmp,d12tmp,d21tmp,d22tmp,qa1,qa2],[v11,v12,v21,v22,phih1,phih2];
+  214 :
+  215 :         varf l([d11t,d12t,d21t,d22t,qa1,qa2],[vh11,vh12,vh21,vh22,phih1,phih2])
+  216 :         = int2d(ThaI)([pd11,pd12,pd21,pd22] '*[vh11,vh12,vh21,vh22]
+  217 :           -(f1*phia*phih1+f2*phia*phih2)
+  218 :           -(p*phih1*dx(phia)+p*phih2*dy(phia))
+  219 :           +(Grad(u1)        [dx(u1),dy(u1)]      '*Grad(phia)        [dx(phia),dy(phia)]      *phih1+Grad(u2)
+     [dx(u2),dy(u2)]      '*Grad(phia)        [dx(phia),dy(phia)]      *phih2))
+  220 :           + on(10,d11t = 0, d12t = 0, d21t=0, d22t=0);
+  221 :
+  222 :         VPa [F,F1,F2,F3,F4,F5] ;
+  223 :         F[] = l(0,VPa);
+  224 :         Fa[i].resize(F[].n);
+  225 :         Fa[i]=F[];
+  226 :         d11tmp[] = Aa[i]^-1*Fa[i];
+  227 :         real[int] so(d11tmp[].n);
+  228 :         so=d11res[](I[i]);
+  229 :         d11tmp[]= d11tmp[].*epsI[i];
+  230 :         d11tmp[] += so;
+  231 :         d11res[](I[i]) = d11tmp[];
+  232 :         phia[][i]=0;
+  233 : }
+  234 : [d11,d12,d21,d22]=[d11res,d12res,d21res,d22res];
+  235 :
+  236 :
+  237 : Ph0 fh1,fh2;
+  238 : fh1=f1;
+  239 : fh2=f2;
+  240 : // computation for the estimator
+  241 : varf indicatorEtaDisc(unused,chiK) = int2d(Th)(chiK*(Div(u1,u2)   (dx(u1)+dy(u2)) '*Div(u1,u2)   (dx(u1)+dy(u2)) )/beta/beta)
+  242 : +  int2d(Th)(chiK*hTriangle*hTriangle/pi/pi*((f1-fh1)*(f1-fh1)+(f2-fh2)*(f2-fh2)))
+  243 : +  int2d(Th)(chiK*(  ([dx(u1),dy(u1),dx(u2),dy(u2)]-[d11,d12,d21,d22]-[p,0,0,p])'*([dx(u1),dy(u1),dx(u2),dy(u2)]-[d11,d12,d21,d22]-[p,0,0,p])));
+  244 : Whh mapEtaDisc;
+  245 : mapEtaDisc[]=indicatorEtaDisc(0,Whh);
+  246 : real GlobalEstimator=sqrt(mapEtaDisc[].sum);
+  247 : mapEtaDisc=sqrt(mapEtaDisc);
+  248 : plot(mapEtaDisc,  ps="MapDiscretisationEstimator.eps",value=1, fill=1,cmm="DiscretizationEstimator");
+  249 :
+  250 : cout<<"************************************ "<<endl;
+  251 : cout<<"GlobalError on u= " <<GlobalErrorU<<endl;
+  252 : cout<<"GlobalError on p= " <<GlobalErrorP<<endl;
+  253 : cout<<"GlobalError = " <<GlobalErrorU+GlobalErrorP<<endl;
+  254 : cout<<"GlobalEstimator = " <<GlobalEstimator<<endl;
+  255 :  sizestack + 1024 =80632  ( 79608 )
+ 
+exec: clear
+'clear' is not recognized as an internal or external command,
+operable program or batch file.
+  -- Square mesh : nb vertices  =961 ,  nb triangles = 1800 ,  nb boundary edges 120
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+ GC:  converge in  10 g=1.90594e-14 rho= 0.877568 gamma= 0.105209
+ GC:  converge in  10 g=4.62701e-15 rho= 0.890739 gamma= 0.111549
+ GC:  converge in  10 g=1.9581e-15 rho= 0.897108 gamma= 0.109944
+ GC:  converge in  10 g=1.00451e-15 rho= 0.895717 gamma= 0.111758
+ GC:  converge in  10 g=5.33557e-16 rho= 0.895677 gamma= 0.111963
+ GC:  converge in  10 g=3.03614e-16 rho= 0.894636 gamma= 0.112226
+ GC:  converge in  10 g=2.08458e-16 rho= 0.889313 gamma= 0.111049
+ GC:  converge in  11 g=2.30476e-17 rho= 0.89855 gamma= 0.114016
+ GC:  converge in  11 g=2.61269e-17 rho= 0.898297 gamma= 0.113926
+ GC:  converge in  11 g=2.75608e-17 rho= 0.897988 gamma= 0.113737
+ GC:  converge in  11 g=2.6345e-17 rho= 0.897499 gamma= 0.113507
+ GC:  converge in  12 g=2.56222e-18 rho= 0.893376 gamma= 0.110065
+ GC:  converge in  12 g=2.13017e-18 rho= 0.892432 gamma= 0.109915
+ GC:  converge in  12 g=1.69259e-18 rho= 0.891697 gamma= 0.10981
+ GC:  converge in  12 g=1.298e-18 rho= 0.891111 gamma= 0.109733
+ GC:  converge in  12 g=9.67591e-19 rho= 0.890635 gamma= 0.109675
+ GC:  converge in  12 g=7.04888e-19 rho= 0.890243 gamma= 0.109629
+ GC:  converge in  12 g=5.03886e-19 rho= 0.889916 gamma= 0.109592
+ GC:  converge in  12 g=3.54576e-19 rho= 0.88964 gamma= 0.109563
+ GC:  converge in  12 g=2.46232e-19 rho= 0.889405 gamma= 0.109539
+ GC:  converge in  12 g=1.69089e-19 rho= 0.889203 gamma= 0.109519
+ GC:  converge in  12 g=1.1501e-19 rho= 0.889029 gamma= 0.109503
+ GC:  converge in  12 g=7.7588e-20 rho= 0.888878 gamma= 0.10949
+ GC:  converge in  13 g=5.69019e-21 rho= 0.887313 gamma= 0.109484
+ GC:  converge in  13 g=3.78996e-21 rho= 0.887291 gamma= 0.109532
+ GC:  converge in  13 g=2.51072e-21 rho= 0.887274 gamma= 0.109576
+ GC:  converge in  13 g=1.65544e-21 rho= 0.88726 gamma= 0.109615
+ GC:  converge in  13 g=1.087e-21 rho= 0.887248 gamma= 0.10965
+ GC:  converge in  13 g=7.11149e-22 rho= 0.887238 gamma= 0.109682
+ GC:  converge in  13 g=4.63761e-22 rho= 0.88723 gamma= 0.10971
+ GC:  converge in  13 g=3.01571e-22 rho= 0.887224 gamma= 0.109736
+ GC:  converge in  13 g=1.95609e-22 rho= 0.887218 gamma= 0.109759
+ GC:  converge in  13 g=1.26593e-22 rho= 0.887213 gamma= 0.10978
+ GC:  converge in  13 g=8.17643e-23 rho= 0.887209 gamma= 0.109799
+ GC:  converge in  13 g=5.27158e-23 rho= 0.887205 gamma= 0.109816
+ GC:  converge in  13 g=3.39331e-23 rho= 0.887202 gamma= 0.109832
+ GC:  converge in  13 g=2.18116e-23 rho= 0.887199 gamma= 0.109846
+ GC:  converge in  13 g=1.40021e-23 rho= 0.887197 gamma= 0.109859
+ GC:  converge in  13 g=8.97842e-24 rho= 0.887195 gamma= 0.10987
+ GC:  converge in  13 g=5.75119e-24 rho= 0.887193 gamma= 0.109881
+ GC:  converge in  13 g=3.68055e-24 rho= 0.887192 gamma= 0.10989
+ GC:  converge in  13 g=2.35344e-24 rho= 0.88719 gamma= 0.109899
+ GC:  converge in  13 g=1.50372e-24 rho= 0.887189 gamma= 0.109907
+ GC:  converge in  13 g=9.60143e-25 rho= 0.887188 gamma= 0.109914
+ GC:  converge in  13 g=6.12685e-25 rho= 0.887187 gamma= 0.10992
+ GC:  converge in  13 g=3.9075e-25 rho= 0.887186 gamma= 0.109926
+ GC:  converge in  13 g=2.49082e-25 rho= 0.887185 gamma= 0.109931
+ GC:  converge in  13 g=1.58705e-25 rho= 0.887184 gamma= 0.109936
+ GC:  converge in  13 g=1.01078e-25 rho= 0.887184 gamma= 0.109941
+ GC:  converge in  13 g=6.43526e-26 rho= 0.887183 gamma= 0.109945
+ GC:  converge in  13 g=4.0957e-26 rho= 0.887183 gamma= 0.109948
+ GC:  converge in  13 g=2.6059e-26 rho= 0.887182 gamma= 0.109952
+ GC:  converge in  13 g=1.65756e-26 rho= 0.887182 gamma= 0.109955
+ GC:  converge in  13 g=1.05407e-26 rho= 0.887181 gamma= 0.109957
+ GC:  converge in  13 g=6.70153e-27 rho= 0.887181 gamma= 0.10996
+ GC:  converge in  13 g=4.25978e-27 rho= 0.887181 gamma= 0.109962
+ GC:  converge in  13 g=2.70719e-27 rho= 0.887181 gamma= 0.109964
+ GC:  converge in  13 g=1.72021e-27 rho= 0.887181 gamma= 0.109966
+ GC:  converge in  13 g=1.09288e-27 rho= 0.88718 gamma= 0.109967
+ GC:  converge in  13 g=6.94228e-28 rho= 0.887179 gamma= 0.109969
+ GC:  converge in  13 g=4.4094e-28 rho= 0.88718 gamma= 0.109971
+ GC:  converge in  13 g=2.80032e-28 rho= 0.88718 gamma= 0.109972
+ GC:  converge in  13 g=1.77827e-28 rho= 0.887178 gamma= 0.109973
+ GC:  converge in  13 g=1.12909e-28 rho= 0.887178 gamma= 0.109974
+ GC:  converge in  13 g=7.16847e-29 rho= 0.887179 gamma= 0.109975
+ GC:  converge in  13 g=4.5509e-29 rho= 0.887182 gamma= 0.109977
+ GC:  converge in  13 g=2.88908e-29 rho= 0.88718 gamma= 0.109977
+ GC:  converge in  13 g=1.83381e-29 rho= 0.887175 gamma= 0.109975
+ GC:  converge in  13 g=1.16384e-29 rho= 0.887173 gamma= 0.109978
+ GC:  converge in  13 g=7.38781e-30 rho= 0.887184 gamma= 0.109983
+ try getConsole C:\Users\Ankit Patel\Desktop\Stoke\Stoke.cpp

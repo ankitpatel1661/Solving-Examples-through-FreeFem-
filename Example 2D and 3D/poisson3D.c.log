@@ -1,0 +1,123 @@
+You chose the file "C:\Users\Ankit Patel\Desktop\Example 2D and 3D\poisson3D.c"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : load "tetgen"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\tetgen = 0) load: tetgen
+ 
+    2 :
+    3 : // Parameters
+    4 : real hh = 0.1;
+    5 : func ue = 2.*x*x + 3.*y*y + 4.*z*z + 5.*x*y + 6.*x*z + 1.;
+    6 : func f= -18.;
+    7 :
+    8 : // Mesh
+    9 : mesh Th = square(10, 20, [x*pi-pi/2, 2*y*pi]); // ]-pi/2, pi/2[X]0,2pi[
+   10 : func f1 = cos(x)*cos(y);
+   11 : func f2 = cos(x)*sin(y);
+   12 : func f3 = sin(x);
+   13 : func f1x = sin(x)*cos(y);
+   14 : func f1y = -cos(x)*sin(y);
+   15 : func f2x = -sin(x)*sin(y);
+   16 : func f2y = cos(x)*cos(y);
+   17 : func f3x = cos(x);
+   18 : func f3y = 0;
+   19 : func m11 = f1x^2 + f2x^2 + f3x^2;
+   20 : func m21 = f1x*f1y + f2x*f2y + f3x*f3y;
+   21 : func m22 = f1y^2 + f2y^2 + f3y^2;
+   22 : func perio = [[4, y], [2, y], [1, x], [3, x]];
+   23 : real vv = 1/square(hh);
+   24 : Th = adaptmesh(Th, m11*vv, m21*vv, m22*vv, IsMetric=1, periodic=perio);
+   25 : Th = adaptmesh(Th, m11*vv, m21*vv, m22*vv, IsMetric=1, periodic=perio);
+   26 : plot(Th);
+   27 :
+   28 : real[int] domain = [0., 0., 0., 1, 0.01];
+   29 : mesh3 Th3 = tetgtransfo(Th, transfo=[f1, f2, f3], nbofregions=1, regionlist=domain)construction par BuilLayeMeshê|‘_Op
+;
+   30 : plot(Th3);
+   31 :
+   32 : border cc(t=0, 2*pi){x=cos(t); y=sin(t); label=1;}
+   33 : mesh Th2 = buildmesh(cc(50));
+   34 :
+   35 : // Fespace
+   36 : fespace Vh(Th3, P23d);
+   37 : Vh u, v;
+   38 : Vh uhe = ue;
+   39 : cout << "uhe min: " << uhe[].min << " - max: " << uhe[].max << endl;
+   40 : cout << uhe(0.,0.,0.) << endl;
+   41 :
+   42 : fespace Vh2(Th2, P2);
+   43 : Vh2 u2, u2e;
+   44 :
+   45 : // Macro
+   46 : macro Grad3(u) [dx(u), dy(u), dz(u)]  )  //
+   47 :
+   48 : // Problem
+   49 : problem Lap3d (u, v, solver=CG)
+   50 :     = int3d(Th3)(
+   51 :           Grad3(v)     [dx(v), dy(v), dz(v)] ' * Grad3(u)     [dx(u), dy(u), dz(u)]
+   52 :     )
+   53 :     - int3d(Th3)(
+   54 :           f * v
+   55 :     )
+   56 :     + on(0, 1, u=ue)
+   57 :     ;
+   58 :
+   59 : // Solve
+   60 : Lap3d;
+   61 : cout << "u min: " << u[]. min << " - max: " << u[].max << endl;
+   62 :
+   63 : // Error
+   64 : real err = int3d(Th3)(square(u-ue));
+   65 : cout << int3d(Th3)(1.) << " = " << Th3.measure << endl;
+   66 : Vh d = ue - u;
+   67 : cout << " err = " << err << " - diff l^intfy = " << d[].linfty << endl;
+   68 :
+   69 : // Plot
+   70 : u2 = u;
+   71 : u2e = ue;
+   72 : plot(u2, wait=true);
+   73 : plot(u2, u2e,wait=true);
+   74 :  sizestack + 1024 =9280  ( 8256 )
+ 
+  -- Square mesh : nb vertices  =231 ,  nb triangles = 400 ,  nb boundary edges 60
+  -- adaptmesh Regulary:  Nb triangles 2656 , h  min 0.0712759 , h max 0.890491
+     area =  19.7392 , M area = 1142.64 , M area/( |Khat| nt) 0.99353
+     infiny-regularity:  min 0.426333  max 2.02388
+     anisomax  13.1213, beta max = 1.24885 min  0.779147
+  --  mesh:  Nb of Triangles =   2656, Nb of Vertices 1368
+  -- adaptmesh Regulary:  Nb triangles 2654 , h  min 0.0695239 , h max 1.17179
+     area =  19.7392 , M area = 1165.7 , M area/( |Khat| nt) 1.01435
+     infiny-regularity:  min 0.415579  max 1.99892
+     anisomax  14.8193, beta max = 1.24728 min  0.792065
+  --  mesh:  Nb of Triangles =   2654, Nb of Vertices 1365
+ Vertex Triangle Border 1365  2654 74
+3D RemplissageSurf3D:: Vertex  triangle2  border 1323 2642 31
+ tetgenio: vertex
+ tetgenio: facet
+tetgen: before tetrahedralize( , &in, &out);
+numberof regions 1
+numberof hole 0
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+  Segments are connected properly.
+tetgen: after tetrahedralize( , &in, &out);
+Th3 :: Vertex Element Border :: 1595 5306 2642
+ Finish Mesh3 tetgen :: Vertex, Element, Border1595 5306 2642
+FreeFEM: End check mesh given by tetgen
+FreeFEM: End check mesh given by tetgen
+  Plot::  Sorry no ps version for this type of plot 5
+  --  mesh:  Nb of Triangles =    438, Nb of Vertices 245
+  -- Build Nodes/DF on mesh :   n.v. 1595, n. elmt. 5306, n b. elmt. 2642
+     nb of Nodes 9816    nb of DoF   9816  DFon=1100
+  -- FESpace: Nb of Nodes 9816 Nb of DoF 9816
+uhe min: -0.205799 - max: 7.81331
+1
+ GC:  converge in  62 g=5.01014e-10 rho= 1.32912 gamma= 0.593103
+  -- Solve :
+          min -0.205799  max 7.81331
+u min: -0.205799 - max: 7.81331
+4.16765 = 4.16765
+ err = 2.60586e-11 - diff l^intfy = 1.0747e-05
+times: compile 0.339s, execution 4.358s,  mpirank:0
+ ######## We forget of deleting   -10 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3843,  size :486760 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Desktop\Example 2D and 3D\poisson3D.c

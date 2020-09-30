@@ -1,0 +1,267 @@
+You chose the file "C:\Users\Ankit Patel\Desktop\Laplace\Laplace.c"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : /*********************************************************************
+    2 :  *
+    3 :  * garanteed A posteroiri error estimate for laplace problem
+    4 :  * version I, with the classical way to computer all the terms
+    5 :  * This is not an optimized version
+    6 :  * usage: FreeFem++
+    7 :  * file: LaplaceVersionI.edp
+    8 :  * author: Zuqi Tang
+    9 :  * email : zuqi.tang@inria.fr
+   10 :  * 04/2015
+   11 :  *********************************************************************/
+   12 :
+   13 : load "Element_Mixte"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\Element_Mixte = 0) //For loading the R¿`ªT1 element
+   14 : system("clear");
+   15 :
+   16 :
+   17 : // Table for computational time
+   18 : real[int] TimeSave(20);
+   19 : int timeConsPatchThaI=1;
+   20 : int timeConsGlobMat=2;
+   21 : int timeCompEtaAlg=3;
+   22 : int timeMapEtaAlg=4;
+   23 : int timeCompEtaDisc=5;
+   24 : int timeMapEtaDisc=6;
+   25 : int timeConsRHS=7;
+   26 : int timeSolvRHS=8;
+   27 : int timeCompEta=9;
+   28 : int timeMapEta=10;
+   29 : int timeSover=11;
+   30 : int timeProRHS=12;
+   31 : int timeCompEtaPart1=13;
+   32 : int timeCompEtaPart2=14;
+   33 : int timeCompEtaPart3=15;
+   34 : int timeCompEtaPart4=16;
+   35 : int timeCompEtaPart5=17;
+   36 : int timeProEta=18;
+   37 : int timeCompEtaOptmised=19;
+   38 :
+   39 :
+   40 : // define the mesh
+   41 : int numnode = 80;
+   42 : mesh Th = square(numnode,numnode);
+   43 :
+   44 :
+   45 :
+   46 : // case with an analytic solution, and its derivatives [dx(u),dy(u)]
+   47 : func uExact = x*(x-1)*y*(y-1);
+   48 : func dxuExact=(2*x-1)*y*(y-1);
+   49 : func dyuExact=(2*y-1)*x*(x-1);
+   50 : // boundary condition
+   51 : func gd=x*(x-1)*y*(y-1);
+   52 : func f = -2*(x*x+y*y)+2*(x+y);
+   53 :
+   54 : // macro definition
+   55 : macro Div(u1,u2) (dx(u1)+dy(u2))  )  //EOM
+   56 : macro Grad(u) [dx(u),dy(u)]       )  //EOM
+   57 :
+   58 :
+   59 : // functional space for solution
+   60 : fespace Vh(Th,P1);
+   61 : Vh uh, vh;
+   62 : Vh uvisu=uExact;   //visualisation of the exact solution, projection in Vh space
+   63 :
+   64 :
+   65 : // variational formulation
+   66 : varf a(uh,vh)=int2d(Th)(Grad(uh)        [dx(uh),dy(uh)]      '*Grad(vh)        [dx(vh),dy(vh)]      ) + int2d(Th¿`ª)(f*vh) + on(1,2,3,4,uh=gd);
+   67 :
+   68 : // solve the laplace problem exactly
+   69 : matrix A=a(Vh,Vh,solver=CG);
+   70 : real[int] b=a(0,Vh);
+   71 : real TimeCurrent=clock();
+   72 : uh[]=A^-1*b;
+   73 : TimeSave[timeSover]=clock()-TimeCurrent;
+   74 :
+   75 :
+   76 :
+   77 :
+   78 :
+   79 : //visualisation of the analytic solution and numerical solution
+   80 : plot(uvisu,value=1,fill=1,ps="analyticsolution.eps",cmm="analytic solution");
+   81 : plot(uh,value=1,fill=1,ps="numericalsolution.eps",cmm="numerical solution");
+   82 :
+   83 :
+   84 :
+   85 : real GlobalError;
+   86 : func int ErrorMapGeneration()
+   87 : {
+   88 :     cout<<" TO generate the distribution of error map ... "<<endl;
+   89 :     // computation for the exact error and map of error distribution
+   90 :     fespace Wh(Th,P0); // constant in each element
+   91 :     varf indicatorErrorTotal(unused,chiK) = int2d(Th)(chiK*((Grad(uh)        [dx(uh),dy(uh)]      -[dxuExact,dyu¿`ªExact])'*(Grad(uh)        [dx(uh),dy(uh)]      -[dxuExact,dyuExact])));
+   92 :     Wh mapErrorTotal;
+   93 :     mapErrorTotal[]=indicatorErrorTotal(0,Wh);
+   94 :     GlobalError=sqrt(mapErrorTotal[].sum);
+   95 :     mapErrorTotal=sqrt(mapErrorTotal);
+   96 :     plot(mapErrorTotal, ps="MapDiscretisationError.eps",value=1, fill=1,cmm="DiscretisationError");
+   97 : }
+   98 :
+   99 :
+  100 :
+  101 : //************************ Computational part: a posteriori estimator  **************************
+  102 : func int versionclassic()
+  103 : {
+  104 : mesh ThaI=Th;
+  105 : fespace Pa(ThaI,P1dc);
+  106 : fespace VPa(ThaI,[RT1,P1dc]);
+  107 : fespace VRT(Th,RT1);
+  108 :
+  109 :
+  110 : Vh phia=0;
+  111 : real epsregua = numnode*numnode*1e-10;   //regularization for sub-problem,
+  112 : mesh[int] Tha(Th.nv);
+  113 : matrix[int] Aa(Th.nv);
+  114 :
+  115 :
+  116 : // construction of the patch for each node on the mesh
+  117 : TimeCurrent=clock();
+  118 : for(int i=0; i <Th.nv; ++i)
+  119 : {
+  120 :     phia[][i]=1;
+  121 :     Tha[i] = trunc(Th,phia>0,label=10);
+  122 :     if (Th(i).label==0) Tha[i]=change(Tha[i],flabel=10);
+  123 :     phia[][i]=0;
+  124 : }
+  125 : TimeSave[timeConsPatchThaI]=clock()-TimeCurrent;
+  126 :
+  127 :
+  128 : // construction of the local problem
+  129 : TimeCurrent=clock();
+  130 : for( int i=0; i < Th.nv ;++i)
+  131 : {
+  132 : //  to bluild the basic function
+  133 :     phia[][i]=1; // phia
+  134 :     ThaI = Tha[i];
+  135 :     Pa Chia =1;
+  136 :     VPa [s1,s2,ra],[v1,v2,q];
+  137 :     //matrix
+  138 :     varf a([s1,s2,ra],[v1,v2,q]) = int2d(ThaI)( [s1,s2]'*[v1,v2] - ra*Div(v1,v2)   (dx(v1)+dy(v2))  - Div(s1,s2)¿`ª   (dx(s1)+dy(s2)) *q - epsregua*ra*q )+ on(10, s1=0,s2=0);
+  139 :     matrix Art=a(VPa,VPa);
+  140 :     Aa[i]= Art;
+  141 :     set(Aa[i],solver=sparsesolver);
+  142 :     phia[][i]=0;
+  143 : }
+  144 : TimeSave[timeConsGlobMat]=clock()-TimeCurrent;
+  145 :
+  146 :
+  147 : // script de F. Hecht:  number for global matrix to local matrix
+  148 : int[int][int] I(Th.nv);
+  149 : real[int][int] epsI(Th.nv);
+  150 : VRT [num,num1];
+  151 : real[int][int] Fa(Th.nv);
+  152 : num[]= 1: num[].n ; //
+  153 : for(int i=0; i <Th.nv; ++i)
+  154 : {
+  155 :     ThaI = Tha[i];
+  156 :     VPa [ul,vl,p];
+  157 :     [ul,vl,p] = [num,num1,1e9];
+  158 :     I[i].resize(VPa.ndof);
+  159 :     epsI[i].resize(VPa.ndof);
+  160 :     for(int j=0;j<ul[].n;++j)
+  161 :     {
+  162 :         epsI[i][j]= ul[][j] < 0 ? -1 : 1;
+  163 :         I[i][j]= abs(ul[][j])-0.5 ;
+  164 :         if(I[i][j]>= 999999999)I[i][j]=-1;
+  165 :     }
+  166 : }
+  167 :
+  168 :
+  169 : //for loop computing right hand side and solve local problem
+  170 : VRT [sigma1,sigma2]=[0,0];
+  171 : TimeCurrent=clock();
+  172 : for(int i=0; i < Th.nv ;++i)
+  173 : {
+  174 :     phia[][i]=1; // phia
+  175 :     ThaI = Tha[i];
+  176 :     Pa Chia =1;
+  177 :     VPa [s1,s2,ra],[v1,v2,q];
+  178 :     //right hand side
+  179 :     varf l([uv1,uv2,uq],[v1,v2,q]) = int2d(ThaI)( - phia*(Grad(uh)        [dx(uh),dy(uh)]      '*[v1,v2] + f*q)
+¿`ª+ Grad(phia)        [dx(phia),dy(phia)]      '*Grad(uh)        [dx(uh),dy(uh)]      *q)
+  180 :                                     + on(10,uv1 = 0, uv2 = 0);
+  181 :     VPa [F,F1,F2] ; F[] = l(0,VPa);
+  182 :     Fa[i].resize(F[].n);
+  183 :     Fa[i]=F[];
+  184 :     s1[] = Aa[i]^-1*Fa[i];
+  185 :     real[int] so(s1[].n);
+  186 :     so=sigma1[](I[i]);
+  187 :     s1[]= s1[].*epsI[i];
+  188 :     s1[] += so;
+  189 :     sigma1[](I[i]) = s1[];
+  190 :     phia[][i]=0;
+  191 : }
+  192 : TimeSave[timeConsRHS]=clock()-TimeCurrent;
+  193 :
+  194 :
+  195 : real GlobalEstimator;
+  196 : func int EstimatorMapGeneration()
+  197 : {
+  198 :     TimeCurrent=clock();
+  199 :     cout<<" TO generate the distribution of estimator map ..
+  ... : . "<<endl;
+  200 :     // computation for the estimator
+  201 :     fespace Wh(Th,P0); // constant in each element
+  202 :     varf indicatorEtaDisc(unused,chiK) = int2d(Th)(chiK*( (Grad(uh)        [dx(uh),dy(uh)]       + [sigma1,sigma¿`ª2]) '* (Grad(uh)        [dx(uh),dy(uh)]       + [sigma1,sigma2])  ))
+  203 :                                 + int2d(Th)(chiK*(hTriangle*hTriangle/pi/pi* (f-Div(sigma1,sigma2)   (dx(sigma1)¿`ª+dy(sigma2)) )*(f-Div(sigma1,sigma2)   (dx(sigma1)+dy(sigma2)) ) ));
+  204 :     Wh mapEtaDisc;
+  205 :     mapEtaDisc[]=indicatorEtaDisc(0,Wh);
+  206 :     GlobalEstimator=sqrt(mapEtaDisc[].sum);
+  207 :     mapEtaDisc=sqrt(mapEtaDisc);
+  208 :     //mapEtaDisc=mapEtaDisc/mapEtaDisc[].max;
+  209 :     plot(mapEtaDisc,  ps="MapDiscretisationEstimator.eps",value=1, fill=1,cmm="DiscretizationEstimator");
+  210 :     TimeSave[timeMapEta]=clock()-TimeCurrent;
+  211 : }
+  212 :
+  213 : TimeCurrent=clock();
+  214 : // computation for the estimator
+  215 : real resEstimator=int2d(Th)(( (Grad(uh)        [dx(uh),dy(uh)]       + [sigma1,sigma2]) '* (Grad(uh)        [dx(¿`ªuh),dy(uh)]       + [sigma1,sigma2])  ))
+  216 :              + int2d(Th)((hTriangle*hTriangle/pi/pi* (f-Div(sigma1,sigma2)   (dx(sigma1)+dy(sigma2)) )*(f-Div(si¿`ªgma1,sigma2)   (dx(sigma1)+dy(sigma2)) ) ));
+  217 : resEstimator=sqrt(resEstimator);
+  218 : //mapEtaDisc=mapEtaDisc/mapEtaDisc[].max;
+  219 : TimeSave[timeCompEta]=clock()-TimeCurrent;
+  220 :
+  221 : ErrorMapGeneration();
+  222 : EstimatorMapGeneration();
+  223 : cout<<"GlobalError = " <<GlobalError<<endl;
+  224 : cout<<"GlobalEstimator = " <<GlobalEstimator<<endl;
+  225 :
+  226 :
+  227 : }
+  228 :
+  229 :
+  230 : real TimeVersionClassic=clock();
+  231 : versionclassic();
+  232 : TimeVersionClassic=clock()-TimeVersionClassic;
+  233 :
+  234 : cout<<"Time for computation estimator  (without map)= " <<TimeSave[timeCompEta]<< endl;
+  235 : cout<<"Time for computation estimator (with map) = " <<TimeSave[timeMapEta]<< endl;
+  236 : cout<<"Time for right-hand-side of local problem = " <<TimeSave[timeConsRHS]<< endl;
+  237 :
+  238 : cout<<" ***************************" <<endl;
+  239 : cout<<"Total time for solving Ax=b = " <<TimeSave[timeSover]<<endl;
+  240 : cout<<"Time for constructions of all the patches (Pre Pr
+  ... : oceeding)  = " <<TimeSave[timeConsPatchThaI]<<endl;
+  241 : cout<<"Time for constructions of the global matrix (Pre
+  ... : Proceeding)= "<<TimeSave[timeConsGlobMat]<< endl;
+  242 :
+  243 :
+  244 :
+  245 :
+  246 :
+  247 :
+  248 :
+  249 :
+  250 :
+  251 :
+  252 :  sizestack + 1024 =13888  ( 12864 )
+ 
+exec: clear
+'clear' is not recognized as an internal or external command,
+operable program or batch file.
+  -- Square mesh : nb vertices  =6561 ,  nb triangles = 12800 ,  nb boundary edges 320
+ GC:  converge in  111 g=1.13279e-17 rho= 1.59226 gamma= 0.512037
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+ try getConsole C:\Users\Ankit Patel\Desktop\Laplace\Laplace.c
