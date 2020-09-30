@@ -1,0 +1,102 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\periodic_p´ï3D.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : //Periodic 3D
+    2 : load "msh3"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\msh3 = 0)
+    3 : load "medit"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\medit = 0)
+    4 :
+    5 : // Parameters
+    6 : searchMethod=1; // More safe seach algo
+    7 : real a = 1, d = 0.5, h = 0.5;
+    8 : int nnb = 7, nni = 10;
+    9 : int nz = 3;
+   10 : func zmin = 0;
+   11 : func zmax = h;
+   12 :
+   13 : // Mesh 2D
+   14 : border b1(t=0.5, -0.5){x=a*t; y=-a/2; label=1;}
+   15 : border b2(t=0.5, -0.5){x=a/2; y=a*t; label=2;}
+   16 : border b3(t=0.5, -0.5){x=a*t; y=a/2; label=3;}
+   17 : border b4(t=0.5, -0.5){x=-a/2; y=a*t; label=4;}
+   18 : border i1(t=0, 2.*pi){x=d/2*cos(t); y=-d/2*sin(t); label=7;}
+   19 : mesh Th = buildmesh(b1(-nnb) + b3(nnb) + b2(-nnb) + b4(nnb) + i1(nni));
+   20 :
+   21 : { // Cleaning the memory correctly
+   22 :     int[int] old2new(0:Th.nv-1);
+   23 :     fespace Vh2(Th, P1);
+   24 :     Vh2 sorder = x + y;
+   25 :     sort(sorder[], old2new);
+   26 :     int[int] new2old = old2new^-1; // Inverse permutation
+   27 :     Th = change(Th, renumv=new2old);
+   28 :     sorder[] = 0:Th.nv-1;
+   29 : }
+   30 : {
+   31 :     fespace Vh2(Th, P1);
+   32 :     Vh2 nu;
+   33 :     nu[] = 0:Th.nv-1;
+   34 :     plot(nu, cmm="nu=", wait=true);
+   35 : }
+   36 :
+   37 : // Mesh 3D
+   38 : int[int] rup = [0, 5], rlow = [0, 6], rmid = [1, 1, 2, 2, 3, 3, 4, 4, 7, 7], rtet = [0, 41];
+   39 : mesh3 Th3 = buildlayers(Th, nz, zbound=[zmin, zmax],
+   40 :     reftet=rtet, reffacemid=rmid, reffaceup=rup, reffacelow=rlow);
+   41 : for(int i = 1; i <= 6; ++i)
+   42 :     cout << " int " << i << " : " << int2d(Th3,i)(1.) << " " << int2d(Th3,i)(1./area) << endl;
+   43 :
+   44 : plot(Th3, wait=true);
+   45 : medit("Th3", Th3);
+   46 :
+   47 : fespace Vh(Th3, P2, periodic=[[1, x, z], [3, x, z], [2, y, z], [4, y, z], [5, x, y], [6, x, y]]);
+   48 :  sizestack + 1024 =2176  ( 1152 )
+ 
+  --  mesh:  Nb of Triangles =     80, Nb of Vertices 59
+ int 1 : 0.5 42
+ int 2 : 0.5 42
+ int 3 : 0.5 42
+ int 4 : 0.5 42
+ int 5 : 0.816317 80
+ int 6 : 0.816317 80
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+  Plot::  Sorry no ps version for this type of plot 5
+version de medit ffmedit.exe -popen -filebin 1  Th3
+  -- Medit,  Release 3.0a (Nov. 30, 2007)
+     Copyright (c) LJLL, 1999-2007.
+     compiled:  Fri, Apr 03, 2020 2:43:22 PM (with ff++ 4.6).
+ 
+medit with binary version of popen : mesh(es)
+mesh_name= Th3
+ Loading data file(s)
+End of mesh
+  Input seconds:     0.00
+ 
+ medit1()
+ 
+ Building scene(s)
+  Creating scene 1
+   Loading default options
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+freeglut (ffmedit.exe): fgInitGL2: fghGenBuffers is NULL
+  Scene seconds:     0.14
+ 
+ Rendering scene(s)
+ 
+ Total running seconds:  17.71
+ Thank you for using Medit.
+  -- Build Nodes/DF on mesh :   n.v. 236, n. elmt. 720, n b. elmt. 388
+     nb of Nodes 1014    nb of DoF   1014  DFon=1100
+  -- FESpace: Nb of Nodes 1014 Nb of DoF 1014
+times: compile 0.261s, execution 18.323s,  mpirank:0
+ ######## We forget of deleting   -4 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3863,  size :491432 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\periodic_3D.cp´ïpp

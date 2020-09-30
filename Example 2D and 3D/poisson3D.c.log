@@ -1,4 +1,4 @@
-You chose the file "C:\Users\Ankit Patel\Desktop\Example 2D and 3D\poisson3D.c"
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\poisson3Dp»D.c"
 -- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
  Load: lg_fem lg_mesh lg_mesh3 eigenvalue
     1 : load "tetgen"(load: loadLibary C:\Program Files (x86)\FreeFem++\\.\tetgen = 0) load: tetgen
@@ -30,7 +30,7 @@ You chose the file "C:\Users\Ankit Patel\Desktop\Example 2D and 3D\poisson3D.c"
    26 : plot(Th);
    27 :
    28 : real[int] domain = [0., 0., 0., 1, 0.01];
-   29 : mesh3 Th3 = tetgtransfo(Th, transfo=[f1, f2, f3], nbofregions=1, regionlist=domain)construction par BuilLayeMeshê|‘_Op
+   29 : mesh3 Th3 = tetgtransfo(Th, transfo=[f1, f2, f3], nbofregions=1, regionlist=domain)construction par BuilLayeMeshp»D_Op
 ;
    30 : plot(Th3);
    31 :
@@ -116,8 +116,8 @@ uhe min: -0.205799 - max: 7.81331
 u min: -0.205799 - max: 7.81331
 4.16765 = 4.16765
  err = 2.60586e-11 - diff l^intfy = 1.0747e-05
-times: compile 0.339s, execution 4.358s,  mpirank:0
+times: compile 0.292s, execution 1.511s,  mpirank:0
  ######## We forget of deleting   -10 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
  CodeAlloc : nb ptr  3843,  size :486760 mpirank: 0
 Ok: Normal End
- try getConsole C:\Users\Ankit Patel\Desktop\Example 2D and 3D\poisson3D.c
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\poisson3D.c

@@ -1,0 +1,61 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\lagrange_multipliers.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : //Lagrange multipliers
+    2 : // Parameters
+    3 : func f = 1 + x - y;
+    4 :
+    5 : // Mesh
+    6 : mesh Th = square(10, 10);
+    7 :
+    8 : // Fespace
+    9 : fespace Vh(Th, P1);
+   10 : int n = Vh.ndof;
+   11 : int n1 = n+1;
+   12 : Vh uh, vh;
+   13 :
+   14 : // Problem
+   15 : varf va (uh, vh)
+   16 :     = int2d(Th)(
+   17 :           dx(uh)*dx(vh)
+   18 :         + dy(uh)*dy(vh)
+   19 :     )
+   20 :     ;
+   21 :
+   22 : varf vL (uh, vh) = int2d(Th)(f*vh);
+   23 : varf vb (uh, vh) = int2d(Th)(1.*vh);
+   24 :
+   25 : matrix A = va(Vh, Vh);
+   26 : real[int] b = vL(0, Vh);
+   27 : real[int] B = vb(0, Vh);
+   28 :
+   29 : // Block matrix
+   30 : matrix AA = [ [ A, B ], [ B', 0 ] ];
+   31 : set(AA, solver=sparsesolver);
+   32 :
+   33 : real[int] bb(n+1), xx(n+1), b1(1), l(1);
+   34 : b1 = 0;
+   35 : // Builds the right hand side block
+   36 : bb = [b, b1];
+   37 :
+   38 : // Solve
+   39 : xx = AA^-1 * bb;
+   40 :
+   41 : // Set values
+   42 : [uh[],l] = xx;
+   43 :
+   44 : // Display
+   45 : cout << " l = " << l(0) << " , b(u, 1) =" << B'*uh[] << endl;
+   46 :
+   47 : // Plot
+   48 : plot(uh);
+   49 :  sizestack + 1024 =2144  ( 1120 )
+ 
+  -- Square mesh : nb vertices  =121 ,  nb triangles = 200 ,  nb boundary edges 40
+ l = 1 , b(u, 1) =-3.87562e-18
+times: compile 0.114s, execution 0.009s,  mpirank:0
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+ ######## We forget of deleting   -2 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3579,  size :475064 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\lagrange_multipliers.cpp
