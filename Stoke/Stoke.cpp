@@ -2,8 +2,6 @@
  * 
  * garanteed A posteroiri error estimate for Stokes problems using Uzawa algorithm
  * usage: FreeFem++ 
- * source article: https://who.rocq.inria.fr/Martin.Vohralik/Enseig/APost/a_posteriori.pdf  
- * page 111 for the Stokes problem
  *********************************************************************/
 
 load "Element_Mixte" //For loading the RT1 element

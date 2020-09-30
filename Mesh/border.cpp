@@ -1,0 +1,27 @@
+// Borders and mesh
+
+int upper = 1;
+int others = 2;
+int inner = 3;
+
+border C01(t=0, 1){x=0; y=-1+t; label=upper;}
+border C02(t=0, 1){x=1.5-1.5*t; y=-1; label=upper;}
+border C03(t=0, 1){x=1.5; y=-t; label=upper;}
+border C04(t=0, 1){x=1+0.5*t; y=0; label=others;}
+border C05(t=0, 1){x=0.5+0.5*t; y=0; label=others;}
+border C06(t=0, 1){x=0.5*t; y=0; label=others;}
+border C11(t=0, 1){x=0.5; y=-0.5*t; label=inner;}
+border C12(t=0, 1){x=0.5+0.5*t; y=-0.5; label=inner;}
+border C13(t=0, 1){x=1; y=-0.5+0.5*t; label=inner;}
+
+int n = 10;
+plot(C01(-n) + C02(-n) + C03(-n) + C04(-n) + C05(-n)
+  + C06(-n) + C11(n) + C12(n) + C13(n), wait=true);
+
+mesh Th = buildmesh(C01(-n) + C02(-n) + C03(-n) + C04(-n) + C05(-n)
+  + C06(-n) + C11(n) + C12(n) + C13(n));
+
+plot(Th, wait=true);
+
+cout << "Part 1 has region number " << Th(0.75, -0.25).region << endl;
+cout << "Part 2 has redion number " << Th(0.25, -0.25).region << endl;

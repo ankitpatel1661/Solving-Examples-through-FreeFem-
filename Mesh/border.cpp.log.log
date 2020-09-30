@@ -1,0 +1,14 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\border.cpp.log"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : You The Identifier You does not exist
+ 
+ Error line number 1, in file C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\border.cpp.l ·Ñog, before  token You
+ 
+  current line = 1
+Compile error :
+        line number :1, You
+error Compile error :
+        line number :1, You
+ code = 1 mpirank: 0
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\border.cpp.log

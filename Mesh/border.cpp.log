@@ -1,0 +1,41 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\border.cpp"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : // Borders and mesh
+    2 :
+    3 : int upper = 1;
+    4 : int others = 2;
+    5 : int inner = 3;
+    6 :
+    7 : border C01(t=0, 1){x=0; y=-1+t; label=upper;}
+    8 : border C02(t=0, 1){x=1.5-1.5*t; y=-1; label=upper;}
+    9 : border C03(t=0, 1){x=1.5; y=-t; label=upper;}
+   10 : border C04(t=0, 1){x=1+0.5*t; y=0; label=others;}
+   11 : border C05(t=0, 1){x=0.5+0.5*t; y=0; label=others;}
+   12 : border C06(t=0, 1){x=0.5*t; y=0; label=others;}
+   13 : border C11(t=0, 1){x=0.5; y=-0.5*t; label=inner;}
+   14 : border C12(t=0, 1){x=0.5+0.5*t; y=-0.5; label=inner;}
+   15 : border C13(t=0, 1){x=1; y=-0.5+0.5*t; label=inner;}
+   16 :
+   17 : int n = 10;
+   18 : plot(C01(-n) + C02(-n) + C03(-n) + C04(-n) + C05(-n)
+   19 :   + C06(-n) + C11(n) + C12(n) + C13(n), wait=true);
+   20 :
+   21 : mesh Th = buildmesh(C01(-n) + C02(-n) + C03(-n) + C04(-n) + C05(-n)
+   22 :   + C06(-n) + C11(n) + C12(n) + C13(n));
+   23 :
+   24 : plot(Th, wait=true);
+   25 :
+   26 : cout << "Part 1 has region number " << Th(0.75, -0.25).region << endl;
+   27 : cout << "Part 2 has redion number " << Th(0.25, -0.25).region << endl;
+   28 :  sizestack + 1024 =1432  ( 408 )
+ 
+  --  mesh:  Nb of Triangles =    706, Nb of Vertices 384
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+Part 1 has region number 0
+Part 2 has redion number 3
+times: compile 0.101s, execution 0.231s,  mpirank:0
+ ######## We forget of deleting   -2 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3747,  size :480664 mpirank: 0
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Mesh\border.cpp
