@@ -1,0 +1,73 @@
+You chose the file "C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\2D_elastiPvcity"
+-- FreeFem++ v4.6 (Fri, Apr 03, 2020  2:08:08 PM - git v4.6)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : //Elasticity equation on a beam
+    2 : //Parameters
+    3 : real Rho = 8000.;               //Density
+    4 : real E = 210.e9;                //Young modulus
+    5 : real Nu = 0.27;                 //Poisson ratio
+    6 :
+    7 : real Gravity = -9.81;   //Gravity
+    8 :
+    9 : //Mesh
+   10 : real nn = 10;                   //Mesh quality
+   11 : real L = 20.;                   //Beam length
+   12 : real H = 1.;                    //Beam height
+   13 : int Fixed = 1;                  //Beam fixed label
+   14 : int Free = 2;                   //Beam free label
+   15 : border b1(t=0., L){x=t; y=0.; label=Free;};
+   16 : border b2(t=0., H){x=L; y=t; label=Fixed;};
+   17 : border b3(t=0., L){x=L-t; y=H; label=Free;};
+   18 : border b4(t=0., H){x=0.; y=H-t; label=Fixed;};
+   19 :
+   20 : int nnL = max(2., nn*L);
+   21 : int nnH = max(2., nn*H);
+   22 : mesh Th = buildmesh(b1(nnL) + b2(nnH) + b3(nnL) + b4(nnH));
+   23 :
+   24 : //Fespace
+   25 : func Pk = P2;
+   26 : fespace Uh(Th, [Pk, Pk]);
+   27 : Uh [ux, uy];
+   28 :
+   29 : //Macro
+   30 : real sqrt2 = sqrt(2.);
+   31 : macro Epsilon(ux, uy) [dx(ux), dy(uy), (dy(ux)+dx(uy))/sqrt2]  )  //
+   32 : macro Divergence(ux, uy) (dx(ux) + dy(uy))  )  //
+   33 :
+   34 : //Problem
+   35 : real Mu = E/(2.*(1.+Nu));
+   36 : real Lambda = E*Nu/((1.+ Nu)*(1.-2.*Nu));
+   37 :
+   38 : varf vElasticity ([ux,uy], [vx, vy])
+   39 :         = int2d(Th)(
+   40 :                   Lambda * Divergence(vx, vy)     (dx(vx) + dy( vy))  * Divergence(ux, uy)     (dx(ux) + dy( uy)Pv)
+   41 :                 + 2. * Mu * (
+   42 :                           Epsilon(vx, vy)     [dx(vx), dy( vy), (dy(vx)+dx( vy))/sqrt2] ' * Epsilon(ux, uy)
+[dx(ux), dy( uy), (dy(ux)+dx( uy))/sqrt2]
+   43 :                 )
+   44 :         )
+   45 :         + int2d(Th)(
+   46 :                   Rho * Gravity * vy
+   47 :         )
+   48 :         + on(Fixed, ux=0, uy=0)
+   49 :         ;
+   50 :
+   51 : matrix<real> Elasticity = vElasticity(Uh, Uh, solver=sparsesolver);
+   52 : real[int] ElasticityBoundary = vElasticity(0, Uh);
+   53 : ux[] = Elasticity^-1 * ElasticityBoundary;
+   54 :
+   55 : //Movemesh
+   56 : Th = movemesh(Th, [x+ux, y+uy]);
+   57 : [ux, uy] = [ux, uy];
+   58 :
+   59 : //Plot
+   60 : plot([ux, uy], value=true, cmm="u"); sizestack + 1024 =4448  ( 3424 )
+ 
+  --  mesh:  Nb of Triangles =   4078, Nb of Vertices 2250
+freeglut (ffglut.exe): fgInitGL2: fghGenBuffers is NULL
+times: compile 0.945s, execution 3.19s,  mpirank:0
+ ######## We forget of deleting   -6 Nb pointer,   0Bytes  ,  mpirank 0, memory leak =0
+ CodeAlloc : nb ptr  3741,  size :483392 mpirank: 0
+ WARNING NUMBER bad SearchMethod cas in 2d: 7 int 3d 0(essai d2: 0 3d: 0 )
+Ok: Normal End
+ try getConsole C:\Users\Ankit Patel\Documents\GitHub\Solving Examples through FreeFem++\Example 2D and 3D\2D_elasticityPv
