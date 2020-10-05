@@ -13,7 +13,7 @@ border Taxe(t=0, HH){x=t; y=0; label=0;}
 border Hypo(t=1, 0){x=HH*t; y=RR*t; label=1;}
 border Vert(t=0, RR){x=HH; y=t; label=2;}
 mesh Th2 = buildmesh(Taxe(HH*nn) + Hypo(sqrt(HH*HH+RR*RR)*nn) + Vert(RR*nn));
-plot(Th2, wait=true);
+plot(Th2, wait=true, ps="cone.eps");
 
 // 3D mesh
 real h = 1./nn;
@@ -32,3 +32,4 @@ mesh3 Th3T = buildlayers(Th2, coef=deg, MaxLayersT,
     zbound=[zminT, zmaxT], transfo=[fx, fy, fz],
     facemerge=0, region=r1T, labelmid=r2T);
 medit("cone", Th3T);
+plot(Th3T, wait=true, ps="cone3D.eps");
